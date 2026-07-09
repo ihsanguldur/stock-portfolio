@@ -1,4 +1,4 @@
-package com.serphenix.portfolio.dto;
+package com.serphenix.portfolio.dto.response;
 
 import java.math.BigDecimal;
 import java.time.Instant;

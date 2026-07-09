@@ -1,7 +1,6 @@
 package com.serphenix.portfolio.service;
 
-import com.serphenix.portfolio.dto.StockResponseDto;
-import com.serphenix.portfolio.entity.Stock;
+import com.serphenix.portfolio.dto.response.StockResponseDto;
 import com.serphenix.portfolio.mapper.StockMapper;
 import com.serphenix.portfolio.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
