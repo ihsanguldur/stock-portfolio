@@ -1,6 +1,6 @@
 package com.serphenix.portfolio.mapper;
 
-import com.serphenix.portfolio.dto.UserResponseDto;
+import com.serphenix.portfolio.dto.response.UserResponseDto;
 import com.serphenix.portfolio.entity.User;
 
 public class UserMapper {

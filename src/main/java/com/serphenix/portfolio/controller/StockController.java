@@ -1,6 +1,6 @@
 package com.serphenix.portfolio.controller;
 
-import com.serphenix.portfolio.dto.StockResponseDto;
+import com.serphenix.portfolio.dto.response.StockResponseDto;
 import com.serphenix.portfolio.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,6 +1,6 @@
 package com.serphenix.portfolio.mapper;
 
-import com.serphenix.portfolio.dto.StockResponseDto;
+import com.serphenix.portfolio.dto.response.StockResponseDto;
 import com.serphenix.portfolio.entity.Stock;
 
 public class StockMapper {

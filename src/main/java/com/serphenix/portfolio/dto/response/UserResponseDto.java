@@ -1,4 +1,4 @@
-package com.serphenix.portfolio.dto;
+package com.serphenix.portfolio.dto.response;
 
 import com.serphenix.portfolio.entity.enums.Role;
 
