@@ -9,5 +9,5 @@ public record StockResponseDto(
         String name,
         BigDecimal lastPrice,
         Instant lastUpdate
-        ) {
+) {
 }

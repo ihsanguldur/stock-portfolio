@@ -13,4 +13,5 @@ public record RegisterResponseDto(
         Instant createdAt,
         String accessToken,
         String refreshToken
-) {}
+) {
+}
