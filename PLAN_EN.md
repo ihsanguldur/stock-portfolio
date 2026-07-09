@@ -27,6 +27,7 @@ The following weren't fully specified, so I'm flagging them as assumptions — c
 - `spring-boot-starter-aspectj` — AOP (for auditing/logging; the renamed "aop starter")
 - `spring-boot-starter-validation` — request validation
 - `lombok`, `spring-boot-devtools`
+- `spring-boot-starter-liquibase` — database schema migration management (instead of Hibernate `ddl-auto=update`)
 
 **Note:** No extra dependency is needed for `@Scheduled`/`@Async` — `spring-context` is already included.
 
@@ -36,10 +37,11 @@ The following weren't fully specified, so I'm flagging them as assumptions — c
 
 Each phase builds on the previous one. Following the order is recommended — each phase is an independently verifiable milestone.
 
-### Phase 1 — Basic CRUD and layered architecture
+### Phase 1 — Basic CRUD, layered architecture, and Liquibase migrations
 - Build the Entity → Repository → Service → Controller → DTO flow
 - `Stock` and `User` entities (without auth for now)
-- **Verify:** `GET /api/stocks` works and can be tested via Postman/curl
+- Schema managed via Liquibase changelogs instead of Hibernate `ddl-auto=update` (`db/changelog/db.changelog-master.yaml` + changesets that create the initial tables)
+- **Verify:** `GET /api/stocks` works and can be tested via Postman/curl; the Liquibase log on startup shows the changesets being applied
 
 ### Phase 2 — Security & JWT Auth
 - Register/login flow, access + refresh token
@@ -82,6 +84,7 @@ Each phase builds on the previous one. Following the order is recommended — ea
 - Bring up the full stack with Docker Compose
 - `spring-boot-starter-actuator` for health checks/metrics
 - Move to an event-driven architecture with Kafka/RabbitMQ (only if you actually want to)
+- **Migrate to Domain-Driven Design (DDD):** Move from the current layer-based package structure (`entity`/`service`/`controller`/`dto`/`mapper`) to a feature-based one, and apply real DDD concepts (Aggregate/Aggregate Root, Value Object, Domain vs. Application Service, Bounded Context, Ubiquitous Language) — e.g., making `Portfolio` an aggregate root so `Holding`s can't be mutated directly from outside it. This is a real design change, not just a folder reorg; best tackled once the rest of the plan (Phases 1-8) is settled
 
 ---
 
@@ -209,7 +212,18 @@ Each phase builds on the previous one. Following the order is recommended — ea
 
 ---
 
-## 13. Local Environment Setup
+## 13. Database Migration Strategy (Liquibase)
+
+- `spring.jpa.hibernate.ddl-auto` is **not used** (at most `validate` — to confirm entities match the schema); Liquibase owns the schema, not Hibernate
+- Changelog files: `src/main/resources/db/changelog/db.changelog-master.yaml` (master file that `include`s the individual changeset files)
+- Every new table/column change gets its own changeset file (e.g., `001-create-user-table.yaml`, `002-create-stock-table.yaml`), so each change's history and rollback path stays traceable
+- Format choice: **YAML** (more readable than XML, less noisy than JSON)
+- Liquibase auto-integrates with Spring Boot — `spring-boot-starter-data-jpa` + `spring-boot-starter-liquibase` is enough; changelogs are applied automatically on startup
+- Each changeset defines a `rollback` block for rollback scenarios (Liquibase's standout feature compared to Flyway)
+
+---
+
+## 14. Local Environment Setup
 
 `docker-compose.yml` (to be added in Phase 9, though it can be set up earlier too):
 - `postgres:16` — portfolio DB
@@ -219,7 +233,7 @@ Datasource, Redis, and JWT secret config in `application.yml` are read from envi
 
 ---
 
-## 14. Testing Strategy
+## 15. Testing Strategy
 
 - **Unit tests:** Service layer, with the repository/external client mocked via Mockito
 - **Integration tests:** `@SpringBootTest` + Testcontainers (real Postgres/Redis, not mocks)
@@ -227,6 +241,6 @@ Datasource, Redis, and JWT secret config in `application.yml` are read from envi
 
 ---
 
-## 15. Next Step
+## 16. Next Step
 
 Start with Phase 1: create the `Stock` and `User` entities and the basic repository/service/controller layers. Let's continue together once you're ready.
