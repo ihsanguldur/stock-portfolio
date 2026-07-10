@@ -9,7 +9,6 @@ public class UserMapper {
                 user.getId(),
                 user.getEmail(),
                 user.getRole(),
-                user.getWalletBalance(),
                 user.getCreatedAt()
         );
     }

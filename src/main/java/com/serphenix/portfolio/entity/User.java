@@ -4,7 +4,6 @@ import com.serphenix.portfolio.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -34,10 +33,6 @@ public class User {
     @ToString.Include
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    @Column(name = "wallet_balance")
-    @ToString.Include
-    private BigDecimal walletBalance;
 
     @Column(name = "created_at")
     @ToString.Include

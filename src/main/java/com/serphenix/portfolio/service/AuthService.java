@@ -9,16 +9,19 @@ import com.serphenix.portfolio.dto.response.RefreshResponseDto;
 import com.serphenix.portfolio.dto.response.RegisterResponseDto;
 import com.serphenix.portfolio.entity.RefreshToken;
 import com.serphenix.portfolio.entity.User;
+import com.serphenix.portfolio.entity.Wallet;
 import com.serphenix.portfolio.entity.enums.Role;
 import com.serphenix.portfolio.exception.EmailAlreadyExistsException;
 import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.repository.RefreshTokenRepository;
 import com.serphenix.portfolio.repository.UserRepository;
+import com.serphenix.portfolio.repository.WalletRepository;
 import com.serphenix.portfolio.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -32,7 +35,9 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final WalletRepository walletRepository;
 
+    @Transactional
     public RegisterResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException("Email already registered: " + request.email());
@@ -42,12 +47,17 @@ public class AuthService {
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(Role.USER);
-        user.setWalletBalance(new BigDecimal("100000"));
         user.setCreatedAt(Instant.now());
 
         User savedUser;
         try {
             savedUser = userRepository.save(user);
+
+            Wallet wallet = new Wallet();
+            wallet.setUser(savedUser);
+            wallet.setBalance(new BigDecimal("100000"));
+            walletRepository.save(wallet);
+
         } catch (DataIntegrityViolationException e) {
             throw new EmailAlreadyExistsException("Email already registered: " + request.email());
         }
@@ -60,7 +70,6 @@ public class AuthService {
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getRole(),
-                savedUser.getWalletBalance(),
                 savedUser.getCreatedAt(),
                 accessToken,
                 refreshToken
