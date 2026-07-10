@@ -18,6 +18,7 @@ import com.serphenix.portfolio.repository.UserRepository;
 import com.serphenix.portfolio.repository.WalletRepository;
 import com.serphenix.portfolio.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -66,6 +68,8 @@ public class AuthService {
         String refreshToken = jwtService.generateRefreshToken();
         refreshTokenService.create(savedUser, refreshToken);
 
+        log.info("New user registered: {}", savedUser.getEmail());
+
         return new RegisterResponseDto(
                 savedUser.getId(),
                 savedUser.getEmail(),
@@ -79,15 +83,22 @@ public class AuthService {
     public LoginResponseDto login(LoginRequestDto request) {
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+                .orElseThrow(() -> {
+                    log.warn("Failed login attempt for email: {}", request.email());
+                    return new InvalidCredentialsException("Invalid email or password");
+                });
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Failed login attempt for email: {}", request.email());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken();
         refreshTokenService.create(user, refreshToken);
+
+        log.info("User logged in: {}", user.getEmail());
+
         return new LoginResponseDto(accessToken, refreshToken);
     }
 
@@ -120,6 +131,7 @@ public class AuthService {
                 .ifPresent(token -> {
                     token.setRevoked(true);
                     refreshTokenRepository.save(token);
+                    log.info("User logged out: {}", token.getUser().getEmail());
                 });
     }
 }
