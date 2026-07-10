@@ -1,11 +1,13 @@
 package com.serphenix.portfolio.helper;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
+@Slf4j
 public class RetryHelper {
 
     public static <T> T executeWithRetry(Supplier<T> supplier, Supplier<RuntimeException> onExhausted, int maxAttempts) {
@@ -18,8 +20,11 @@ public class RetryHelper {
             } catch (OptimisticLockingFailureException | DataIntegrityViolationException e) {
                 attempts++;
                 if (attempts >= maxAttempts) {
+                    log.warn("Retry exhausted after {} attempts: {}", attempts, e.getMessage());
                     throw onExhausted.get();
                 }
+
+                log.warn("Retry attempt {}/{} failed, retrying: {}", attempts, maxAttempts, e.getMessage());
 
                 try {
                     Thread.sleep(delay + ThreadLocalRandom.current().nextLong(delay));

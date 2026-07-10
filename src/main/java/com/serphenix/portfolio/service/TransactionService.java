@@ -12,6 +12,7 @@ import com.serphenix.portfolio.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -30,6 +32,7 @@ public class TransactionService {
     private final StockService stockService;
     private final WalletRepository walletRepository;
     private final HoldingRepository holdingRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     @Audited(action = "BUY_STOCK", entityType = "TRANSACTION")
@@ -51,6 +54,7 @@ public class TransactionService {
         );
 
         if (wallet.getBalance().compareTo(cost) < 0) {
+            log.warn("Insufficient balance for {} to buy {} {}", email, request.quantity(), request.symbol());
             throw new InsufficientBalanceException("Insufficient balance to buy " + request.quantity() + " " + request.symbol());
         }
 
@@ -92,6 +96,13 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
+        log.info("{} bought {} {} @ {}", email, request.quantity(), request.symbol(), price);
+
+        notificationService.sendTransactionNotification(
+                user.getEmail(),
+                transaction.getType(),
+                transaction.getStock().getSymbol(), transaction.getQuantity(), transaction.getPrice());
+
         return TransactionMapper.toDto(savedTransaction);
     }
 
@@ -108,10 +119,14 @@ public class TransactionService {
         );
 
         Holding holding = holdingRepository.findByUserAndStock(user, stock).orElseThrow(
-                () -> new InsufficientHoldingException("Insufficient holding " + request.quantity() + " " + request.symbol())
+                () -> {
+                    log.warn("Insufficient holding for {} to sell {} {}", email, request.quantity(), request.symbol());
+                    return new InsufficientHoldingException("Insufficient holding " + request.quantity() + " " + request.symbol());
+                }
         );
 
         if (holding.getQuantity() < request.quantity()) {
+            log.warn("Insufficient holding for {} to sell {} {}", email, request.quantity(), request.symbol());
             throw new InsufficientHoldingException("Insufficient holding " + request.quantity() + " " + request.symbol());
         }
 
@@ -143,6 +158,13 @@ public class TransactionService {
         transaction.setPrice(price);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        log.info("{} sold {} {} @ {}", email, request.quantity(), request.symbol(), price);
+
+        notificationService.sendTransactionNotification(
+                user.getEmail(),
+                transaction.getType(),
+                transaction.getStock().getSymbol(), transaction.getQuantity(), transaction.getPrice());
 
         return TransactionMapper.toDto(savedTransaction);
     }
