@@ -5,7 +5,7 @@ import com.serphenix.portfolio.entity.AuditLog;
 
 public class AuditLogMapper {
     public static AuditLogResponseDto toDto(AuditLog auditLog) {
-        return  new AuditLogResponseDto(
+        return new AuditLogResponseDto(
                 auditLog.getId(),
                 auditLog.getActorUserId(),
                 auditLog.getAction(),

@@ -6,7 +6,6 @@ import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.mapper.UserMapper;
 import com.serphenix.portfolio.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service

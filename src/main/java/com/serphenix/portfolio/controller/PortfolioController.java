@@ -24,6 +24,6 @@ public class PortfolioController {
 
     @GetMapping("/holdings/{symbol}")
     public HoldingResponseDto findHolding(Authentication authentication, @PathVariable String symbol) {
-        return  portfolioService.findHolding(authentication.getName(), symbol);
+        return portfolioService.findHolding(authentication.getName(), symbol);
     }
 }

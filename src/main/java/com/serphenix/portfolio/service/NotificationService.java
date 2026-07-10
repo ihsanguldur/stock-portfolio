@@ -18,6 +18,6 @@ public class NotificationService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        log.info("[NOTIFICATION] {} - {} {} {} @ {}", email , type, symbol, quantity, price);
+        log.info("[NOTIFICATION] {} - {} {} {} @ {}", email, type, symbol, quantity, price);
     }
 }
