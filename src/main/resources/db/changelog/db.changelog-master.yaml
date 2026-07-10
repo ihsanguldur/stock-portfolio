@@ -11,3 +11,12 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/004-seed-stocks.yaml
       relativeToChangelogFile: false
+  - include:
+      file: db/changelog/changes/005-create-wallet-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/changes/006-create-holding-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/changes/007-create-transaction-table.yaml
+      relativeToChangelogFile: false

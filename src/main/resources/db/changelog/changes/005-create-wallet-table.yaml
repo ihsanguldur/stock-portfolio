@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-wallet-table
+      author: serphenix
+      changes:
+        - createTable:
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    unique: true
+                    foreignKeyName: fk_wallets_user
+                    references: users(id)
+              - column:
+                  name: balance
+                  type: DECIMAL(19, 4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: INSERT INTO wallets (user_id, balance, version) SELECT id, wallet_balance, 0 FROM users
+        - dropColumn:
+            tableName: users
+            columnName: wallet_balance
+      rollback:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: wallet_balance
+                  type: DECIMAL(19, 4)
+        - sql:
+            sql: UPDATE users u SET wallet_balance = (SELECT w.balance FROM wallets w WHERE w.user_id = u.id)
+        - dropTable:
+            tableName: wallets
