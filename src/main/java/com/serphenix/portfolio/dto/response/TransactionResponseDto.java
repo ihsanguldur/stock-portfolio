@@ -12,5 +12,5 @@ public record TransactionResponseDto(
         Long quantity,
         BigDecimal price,
         Instant timestamp
-) {
+) implements Identifiable {
 }
