@@ -3,11 +3,9 @@ package com.serphenix.portfolio.controller;
 import com.serphenix.portfolio.dto.response.StockResponseDto;
 import com.serphenix.portfolio.service.StockService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/stocks")
@@ -16,7 +14,12 @@ public class StockController {
     private final StockService stockService;
 
     @GetMapping
-    public List<StockResponseDto> findAll() {
-        return stockService.findAll();
+    public PagedModel<StockResponseDto> findAll(@RequestParam(name = "s", required = false) String search, Pageable pageable) {
+        return stockService.findAll(search, pageable);
+    }
+
+    @GetMapping("/{symbol}")
+    public StockResponseDto findBySymbol(@PathVariable String symbol) {
+        return stockService.getPrice(symbol);
     }
 }
