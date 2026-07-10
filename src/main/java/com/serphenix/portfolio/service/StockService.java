@@ -1,5 +1,6 @@
 package com.serphenix.portfolio.service;
 
+import com.serphenix.portfolio.config.RedisConfig;
 import com.serphenix.portfolio.dto.response.StockResponseDto;
 import com.serphenix.portfolio.entity.Stock;
 import com.serphenix.portfolio.exception.StockNotFoundException;
@@ -7,6 +8,7 @@ import com.serphenix.portfolio.external.StockPriceClient;
 import com.serphenix.portfolio.mapper.StockMapper;
 import com.serphenix.portfolio.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
@@ -29,6 +31,7 @@ public class StockService {
         return new PagedModel<>(stocks.map(StockMapper::toDto));
     }
 
+    @Cacheable(cacheNames = RedisConfig.STOCK_PRICES_CACHE)
     public StockResponseDto getPrice(String symbol) {
 
         Stock stock = stockRepository.findBySymbol(symbol)
