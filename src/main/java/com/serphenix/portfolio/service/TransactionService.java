@@ -1,20 +1,21 @@
 package com.serphenix.portfolio.service;
 
+import com.serphenix.portfolio.audit.Audited;
 import com.serphenix.portfolio.dto.request.BuyRequestDto;
 import com.serphenix.portfolio.dto.request.SellRequestDto;
 import com.serphenix.portfolio.dto.response.TransactionResponseDto;
 import com.serphenix.portfolio.entity.*;
 import com.serphenix.portfolio.entity.enums.TransactionType;
-import com.serphenix.portfolio.exception.InsufficientBalanceException;
-import com.serphenix.portfolio.exception.InsufficientHoldingException;
-import com.serphenix.portfolio.exception.InvalidCredentialsException;
-import com.serphenix.portfolio.exception.StockNotFoundException;
+import com.serphenix.portfolio.exception.*;
 import com.serphenix.portfolio.mapper.TransactionMapper;
 import com.serphenix.portfolio.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,6 +35,7 @@ public class TransactionService {
     private final NotificationService notificationService;
 
     @Transactional
+    @Audited(action = "BUY_STOCK", entityType = "TRANSACTION")
     public TransactionResponseDto buy(String email, BuyRequestDto request) {
 
         User user = userRepository.findByEmail(email).orElseThrow(
@@ -105,6 +107,7 @@ public class TransactionService {
     }
 
     @Transactional
+    @Audited(action = "SELL_STOCK", entityType = "TRANSACTION")
     public TransactionResponseDto sell(String email, SellRequestDto request) {
 
         User user = userRepository.findByEmail(email).orElseThrow(
@@ -164,5 +167,30 @@ public class TransactionService {
                 transaction.getStock().getSymbol(), transaction.getQuantity(), transaction.getPrice());
 
         return TransactionMapper.toDto(savedTransaction);
+    }
+
+    public PagedModel<TransactionResponseDto> findAllTransactions(String email, Pageable pageable) {
+
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new InvalidCredentialsException("User not found")
+        );
+
+        return new PagedModel<>(
+                transactionRepository
+                        .findByUser(user, pageable)
+                        .map(TransactionMapper::toDto)
+        );
+    }
+
+    public TransactionResponseDto findTransaction(String email, @PathVariable Long id) {
+        Transaction t = transactionRepository.findById(id).orElseThrow(
+                () -> new TransactionNotFoundException("Transaction not found")
+        );
+
+        if (!t.getUser().getEmail().equals(email)) {
+            throw new TransactionNotFoundException("Transaction not found");
+        }
+
+        return TransactionMapper.toDto(t);
     }
 }

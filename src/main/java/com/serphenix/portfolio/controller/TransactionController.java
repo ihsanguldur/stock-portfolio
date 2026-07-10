@@ -8,11 +8,10 @@ import com.serphenix.portfolio.helper.RetryHelper;
 import com.serphenix.portfolio.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/transactions")
@@ -37,5 +36,15 @@ public class TransactionController {
                 () -> new TransactionConflictException("Could not complete transaction due to concurrent updates"),
                 5
         );
+    }
+
+    @GetMapping
+    public PagedModel<TransactionResponseDto> findAllTransactions(Authentication authentication, Pageable pageable) {
+        return transactionService.findAllTransactions(authentication.getName(), pageable);
+    }
+
+    @GetMapping("/{id}")
+    public TransactionResponseDto findTransaction(Authentication authentication, @PathVariable Long id) {
+        return transactionService.findTransaction(authentication.getName(), id);
     }
 }

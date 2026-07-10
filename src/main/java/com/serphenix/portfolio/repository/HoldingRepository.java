@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface HoldingRepository extends JpaRepository<Holding, Long> {
     Optional<Holding> findByUserAndStock(User user, Stock stock);
 
+    List<Holding> findByUser(User user);
+
     @Query("SELECT DISTINCT h.stock FROM Holding h")
     List<Stock> findDistinctStocks();
 }
