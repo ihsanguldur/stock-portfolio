@@ -1,6 +1,6 @@
 package com.serphenix.portfolio.config;
 
-import com.serphenix.portfolio.dto.response.StockResponseDto;
+import com.serphenix.portfolio.stock.dto.response.StockResponseDto;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

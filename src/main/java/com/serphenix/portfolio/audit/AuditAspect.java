@@ -1,10 +1,10 @@
 package com.serphenix.portfolio.audit;
 
 import com.serphenix.portfolio.dto.response.Identifiable;
-import com.serphenix.portfolio.entity.AuditLog;
-import com.serphenix.portfolio.entity.User;
+import com.serphenix.portfolio.audit.entity.AuditLog;
+import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.exception.InvalidCredentialsException;
-import com.serphenix.portfolio.repository.UserRepository;
+import com.serphenix.portfolio.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -13,8 +13,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.time.Instant;
 
 @Aspect
 @Component
@@ -38,18 +36,16 @@ public class AuditAspect {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new InvalidCredentialsException("User not found"));
 
-            AuditLog auditLog = new AuditLog();
-            auditLog.setActorUserId(user.getId());
-            auditLog.setAction(audited.action());
-            auditLog.setEntityType(audited.entityType());
-            if (result instanceof Identifiable identifiable) {
-                auditLog.setEntityId(identifiable.id());
-            }
+            Long entityId = result instanceof Identifiable ? ((Identifiable) result).id() : null;
 
-            auditLog.setBeforeState(jsonMapper.writeValueAsString(request));
-            auditLog.setAfterState(jsonMapper.writeValueAsString(result));
-            auditLog.setTimestamp(Instant.now());
-
+            AuditLog auditLog = AuditLog.create(
+                    user.getId(),
+                    audited.action(),
+                    audited.entityType(),
+                    entityId,
+                    jsonMapper.writeValueAsString(request),
+                    jsonMapper.writeValueAsString(result)
+            );
 
             auditLogWriter.write(auditLog);
         } catch (Exception e) {

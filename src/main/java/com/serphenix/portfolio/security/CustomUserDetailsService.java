@@ -1,7 +1,7 @@
 package com.serphenix.portfolio.security;
 
-import com.serphenix.portfolio.entity.User;
-import com.serphenix.portfolio.repository.UserRepository;
+import com.serphenix.portfolio.auth.entity.User;
+import com.serphenix.portfolio.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

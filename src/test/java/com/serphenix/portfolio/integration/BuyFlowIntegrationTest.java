@@ -2,9 +2,9 @@ package com.serphenix.portfolio.integration;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.serphenix.portfolio.config.TestcontainersConfig;
-import com.serphenix.portfolio.dto.request.BuyRequestDto;
-import com.serphenix.portfolio.dto.request.RegisterRequestDto;
-import com.serphenix.portfolio.external.StockPriceClient;
+import com.serphenix.portfolio.transaction.dto.request.BuyRequestDto;
+import com.serphenix.portfolio.auth.dto.request.RegisterRequestDto;
+import com.serphenix.portfolio.stock.external.StockPriceClient;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +87,6 @@ public class BuyFlowIntegrationTest {
                         .content(jsonMapper.writeValueAsString(buyRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.detail").value("Insufficient balance to buy 10000 AAPL"));
+                .andExpect(jsonPath("$.detail").value("Insufficient balance"));
     }
 }

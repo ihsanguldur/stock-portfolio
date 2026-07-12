@@ -1,7 +1,7 @@
 package com.serphenix.portfolio.audit;
 
-import com.serphenix.portfolio.entity.AuditLog;
-import com.serphenix.portfolio.repository.AuditLogRepository;
+import com.serphenix.portfolio.audit.entity.AuditLog;
+import com.serphenix.portfolio.audit.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
