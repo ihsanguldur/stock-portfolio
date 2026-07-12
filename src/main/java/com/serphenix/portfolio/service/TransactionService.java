@@ -80,7 +80,7 @@ public class TransactionService {
                 holding.getAvgCost()
                         .multiply(BigDecimal.valueOf(holding.getQuantity()))
                         .add(cost)
-                        .divide(BigDecimal.valueOf(newQuantity), RoundingMode.HALF_UP);
+                        .divide(BigDecimal.valueOf(newQuantity), 4, RoundingMode.HALF_UP);
 
         holding.setQuantity(newQuantity);
         holding.setAvgCost(newAvgCost);
@@ -141,6 +141,7 @@ public class TransactionService {
         walletRepository.save(wallet);
 
         long newQuantity = holding.getQuantity() - request.quantity();
+        holding.setQuantity(newQuantity);
 
         if (newQuantity == 0) {
             holdingRepository.delete(holding);
