@@ -1,6 +1,6 @@
 package com.serphenix.portfolio.security;
 
-import com.serphenix.portfolio.entity.User;
+import com.serphenix.portfolio.auth.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
