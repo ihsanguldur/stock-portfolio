@@ -1,6 +1,7 @@
 package com.serphenix.portfolio.service;
 
 import com.serphenix.portfolio.audit.Audited;
+import com.serphenix.portfolio.event.TransactionEvent;
 import com.serphenix.portfolio.dto.request.BuyRequestDto;
 import com.serphenix.portfolio.dto.request.SellRequestDto;
 import com.serphenix.portfolio.dto.response.TransactionResponseDto;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +34,7 @@ public class TransactionService {
     private final StockService stockService;
     private final WalletRepository walletRepository;
     private final HoldingRepository holdingRepository;
-    private final NotificationService notificationService;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
     @Audited(action = "BUY_STOCK", entityType = "TRANSACTION")
@@ -98,10 +100,14 @@ public class TransactionService {
 
         log.info("{} bought {} {} @ {}", email, request.quantity(), request.symbol(), price);
 
-        notificationService.sendTransactionNotification(
+        kafkaTemplate.send("transaction-events", new TransactionEvent(
                 user.getEmail(),
                 transaction.getType(),
-                transaction.getStock().getSymbol(), transaction.getQuantity(), transaction.getPrice());
+                transaction.getStock().getSymbol(),
+                transaction.getQuantity(),
+                transaction.getPrice(),
+                transaction.getTimestamp()
+        ));
 
         return TransactionMapper.toDto(savedTransaction);
     }
@@ -162,10 +168,14 @@ public class TransactionService {
 
         log.info("{} sold {} {} @ {}", email, request.quantity(), request.symbol(), price);
 
-        notificationService.sendTransactionNotification(
+        kafkaTemplate.send("transaction-events", new TransactionEvent(
                 user.getEmail(),
                 transaction.getType(),
-                transaction.getStock().getSymbol(), transaction.getQuantity(), transaction.getPrice());
+                transaction.getStock().getSymbol(),
+                transaction.getQuantity(),
+                transaction.getPrice(),
+                transaction.getTimestamp()
+        ));
 
         return TransactionMapper.toDto(savedTransaction);
     }

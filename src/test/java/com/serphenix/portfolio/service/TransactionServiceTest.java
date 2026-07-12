@@ -1,5 +1,6 @@
 package com.serphenix.portfolio.service;
 
+import com.serphenix.portfolio.consumer.TransactionNotificationConsumer;
 import com.serphenix.portfolio.dto.request.BuyRequestDto;
 import com.serphenix.portfolio.dto.request.SellRequestDto;
 import com.serphenix.portfolio.dto.response.StockResponseDto;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,7 +32,7 @@ public class TransactionServiceTest {
     @Mock private StockService stockService;
     @Mock private WalletRepository walletRepository;
     @Mock private HoldingRepository holdingRepository;
-    @Mock private NotificationService notificationService;
+    @Mock private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks private TransactionService transactionService;
 
