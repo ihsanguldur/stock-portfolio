@@ -1,7 +1,5 @@
 package com.serphenix.portfolio.auth.service;
 
-import com.serphenix.portfolio.auth.entity.RefreshToken;
-import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.auth.dto.request.LoginRequestDto;
 import com.serphenix.portfolio.auth.dto.request.LogoutRequestDto;
 import com.serphenix.portfolio.auth.dto.request.RefreshRequestDto;
@@ -9,13 +7,15 @@ import com.serphenix.portfolio.auth.dto.request.RegisterRequestDto;
 import com.serphenix.portfolio.auth.dto.response.LoginResponseDto;
 import com.serphenix.portfolio.auth.dto.response.RefreshResponseDto;
 import com.serphenix.portfolio.auth.dto.response.RegisterResponseDto;
-import com.serphenix.portfolio.wallet.entity.Wallet;
+import com.serphenix.portfolio.auth.entity.RefreshToken;
+import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.auth.exception.EmailAlreadyExistsException;
-import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.auth.repository.RefreshTokenRepository;
 import com.serphenix.portfolio.auth.repository.UserRepository;
-import com.serphenix.portfolio.wallet.repository.WalletRepository;
+import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.security.JwtService;
+import com.serphenix.portfolio.wallet.entity.Wallet;
+import com.serphenix.portfolio.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -49,7 +49,7 @@ public class AuthService {
         try {
             savedUser = userRepository.save(user);
 
-            Wallet wallet = Wallet.create(user, new BigDecimal("100000"));
+            Wallet wallet = Wallet.create(savedUser.getId(), new BigDecimal("100000"));
             walletRepository.save(wallet);
 
         } catch (DataIntegrityViolationException e) {

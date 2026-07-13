@@ -1,7 +1,5 @@
 package com.serphenix.portfolio.transaction.entity;
 
-import com.serphenix.portfolio.auth.entity.User;
-import com.serphenix.portfolio.stock.entity.Stock;
 import com.serphenix.portfolio.transaction.entity.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,13 +22,11 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stock_id", nullable = false)
-    private Stock stock;
+    @Column(name = "stock_id", nullable = false)
+    private Long stockId;
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
@@ -49,10 +45,10 @@ public class Transaction {
     @ToString.Include
     private Instant timestamp;
 
-    public static Transaction create(User user, Stock stock, TransactionType type, Long quantity, BigDecimal price) {
+    public static Transaction create(Long userId, Long stockId, TransactionType type, Long quantity, BigDecimal price) {
         Transaction transaction = new Transaction();
-        transaction.user = user;
-        transaction.stock = stock;
+        transaction.userId = userId;
+        transaction.stockId = stockId;
         transaction.type = type;
         transaction.quantity = quantity;
         transaction.price = price;

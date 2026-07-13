@@ -1,10 +1,10 @@
 package com.serphenix.portfolio.audit;
 
-import com.serphenix.portfolio.dto.response.Identifiable;
 import com.serphenix.portfolio.audit.entity.AuditLog;
 import com.serphenix.portfolio.auth.entity.User;
-import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.auth.repository.UserRepository;
+import com.serphenix.portfolio.dto.response.Identifiable;
+import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;

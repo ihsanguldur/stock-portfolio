@@ -1,16 +1,16 @@
 package com.serphenix.portfolio.portfolio.service;
 
+import com.serphenix.portfolio.auth.entity.User;
+import com.serphenix.portfolio.auth.repository.UserRepository;
+import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.portfolio.dto.response.HoldingResponseDto;
 import com.serphenix.portfolio.portfolio.dto.response.PortfolioResponseDto;
 import com.serphenix.portfolio.portfolio.entity.Holding;
-import com.serphenix.portfolio.stock.entity.Stock;
-import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.portfolio.exception.HoldingNotFoundException;
-import com.serphenix.portfolio.exception.InvalidCredentialsException;
-import com.serphenix.portfolio.stock.exception.StockNotFoundException;
 import com.serphenix.portfolio.portfolio.repository.HoldingRepository;
+import com.serphenix.portfolio.stock.entity.Stock;
+import com.serphenix.portfolio.stock.exception.StockNotFoundException;
 import com.serphenix.portfolio.stock.repository.StockRepository;
-import com.serphenix.portfolio.auth.repository.UserRepository;
 import com.serphenix.portfolio.stock.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,11 +39,11 @@ public class PortfolioService {
                 () -> new StockNotFoundException("Stock not found")
         );
 
-        Holding holding = holdingRepository.findByUserAndStock(user, stock).orElseThrow(
+        Holding holding = holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId()).orElseThrow(
                 () -> new HoldingNotFoundException("Holding not found")
         );
 
-        return toHoldingResponseDto(holding);
+        return toHoldingResponseDto(holding, stock.getSymbol());
     }
 
     public PortfolioResponseDto findPortfolio(String email) {
@@ -49,14 +51,18 @@ public class PortfolioService {
                 () -> new InvalidCredentialsException("User not found")
         );
 
-        List<Holding> holdings = holdingRepository.findByUser(user);
+        List<Holding> holdings = holdingRepository.findByUserId(user.getId());
 
         BigDecimal totalValue = BigDecimal.ZERO;
         BigDecimal totalUnrealizedPnl = BigDecimal.ZERO;
 
+        Map<Long, String> symbolsByStockId = stockRepository.findAllById(
+                holdings.stream().map(Holding::getStockId).distinct().toList()
+        ).stream().collect(Collectors.toMap(Stock::getId, Stock::getSymbol));
+
         List<HoldingResponseDto> holdingResponse = new ArrayList<>();
         for (Holding holding : holdings) {
-            HoldingResponseDto holdingResponseDto = toHoldingResponseDto(holding);
+            HoldingResponseDto holdingResponseDto = toHoldingResponseDto(holding, symbolsByStockId.get(holding.getStockId()));
 
             totalValue = totalValue.add(holdingResponseDto.currentValue());
             totalUnrealizedPnl = totalUnrealizedPnl.add(holdingResponseDto.unrealizedPnl());
@@ -71,15 +77,15 @@ public class PortfolioService {
         );
     }
 
-    private HoldingResponseDto toHoldingResponseDto(Holding holding) {
-        BigDecimal currentPrice = stockService.getPrice(holding.getStock().getSymbol()).lastPrice();
+    private HoldingResponseDto toHoldingResponseDto(Holding holding, String symbol) {
+        BigDecimal currentPrice = stockService.getPrice(symbol).lastPrice();
         BigDecimal currentValue = currentPrice.multiply(BigDecimal.valueOf(holding.getQuantity()));
         BigDecimal unrealizedPnl = currentPrice
                 .subtract(holding.getAvgCost())
                 .multiply(BigDecimal.valueOf(holding.getQuantity()));
 
         return new HoldingResponseDto(
-                holding.getStock().getSymbol(),
+                symbol,
                 holding.getQuantity(),
                 holding.getAvgCost(),
                 currentPrice,
