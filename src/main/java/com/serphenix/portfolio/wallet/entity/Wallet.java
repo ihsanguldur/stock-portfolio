@@ -1,6 +1,5 @@
 package com.serphenix.portfolio.wallet.entity;
 
-import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.wallet.exception.InsufficientBalanceException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,9 +21,8 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private Long userId;
 
     @Column(name = "balance")
     @ToString.Include
@@ -34,9 +32,9 @@ public class Wallet {
     @Column(name = "version")
     private Long version;
 
-    public static Wallet create(User user, BigDecimal balance) {
+    public static Wallet create(Long userId, BigDecimal balance) {
         Wallet wallet = new Wallet();
-        wallet.user = user;
+        wallet.userId = userId;
         wallet.balance = balance;
         return wallet;
     }

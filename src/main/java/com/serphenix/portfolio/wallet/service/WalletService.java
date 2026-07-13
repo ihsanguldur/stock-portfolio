@@ -1,12 +1,12 @@
 package com.serphenix.portfolio.wallet.service;
 
 import com.serphenix.portfolio.audit.Audited;
+import com.serphenix.portfolio.auth.entity.User;
+import com.serphenix.portfolio.auth.repository.UserRepository;
+import com.serphenix.portfolio.exception.InvalidCredentialsException;
 import com.serphenix.portfolio.wallet.dto.request.WalletRequestDto;
 import com.serphenix.portfolio.wallet.dto.response.WalletResponseDto;
-import com.serphenix.portfolio.auth.entity.User;
 import com.serphenix.portfolio.wallet.entity.Wallet;
-import com.serphenix.portfolio.exception.InvalidCredentialsException;
-import com.serphenix.portfolio.auth.repository.UserRepository;
 import com.serphenix.portfolio.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class WalletService {
                 () -> new InvalidCredentialsException("User not found")
         );
 
-        Wallet wallet = walletRepository.findByUser(user).orElseThrow(
+        Wallet wallet = walletRepository.findByUserId(user.getId()).orElseThrow(
                 () -> new IllegalStateException("Wallet not found for user " + user.getId())
         );
 
@@ -41,7 +41,7 @@ public class WalletService {
                 () -> new InvalidCredentialsException("User not found")
         );
 
-        Wallet wallet = walletRepository.findByUser(user).orElseThrow(
+        Wallet wallet = walletRepository.findByUserId(user.getId()).orElseThrow(
                 () -> new IllegalStateException("Wallet not found for user " + user.getId())
         );
 

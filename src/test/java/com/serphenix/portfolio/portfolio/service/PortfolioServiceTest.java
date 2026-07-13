@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -42,19 +43,21 @@ public class PortfolioServiceTest {
     @BeforeEach
     void setUp() {
         user = User.create("test@example.com", "hashed-password");
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         stock = Stock.create("TEST");
+        ReflectionTestUtils.setField(stock, "id", 10L);
     }
 
     @Test
     void findHoldingCalculatesCurrentValueAndUnrealizedPnlCorrectly() {
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
         holding.applyBuy(10L, new BigDecimal("100"), new BigDecimal("1000"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(stockRepository.findBySymbol("TEST")).thenReturn(Optional.of(stock));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.of(holding));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.of(holding));
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("150"), Instant.now()
         ));
@@ -69,15 +72,17 @@ public class PortfolioServiceTest {
     void findPortfolioCalculatesSumTotalValueAndUnrealizedPnlCorrectly() {
 
         Stock stock2 = Stock.create("TEST2");
+        ReflectionTestUtils.setField(stock2, "id", 20L);
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
         holding.applyBuy(10L, new BigDecimal("100"), new BigDecimal("1000"));
 
-        Holding holding2 = Holding.create(user, stock2);
+        Holding holding2 = Holding.create(user.getId(), stock2.getId());
         holding2.applyBuy(5L, new BigDecimal("200"), new BigDecimal("1000"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-        when(holdingRepository.findByUser(user)).thenReturn(List.of(holding, holding2));
+        when(holdingRepository.findByUserId(user.getId())).thenReturn(List.of(holding, holding2));
+        when(stockRepository.findAllById(anyList())).thenReturn(List.of(stock, stock2));
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("150"), Instant.now()
         ));

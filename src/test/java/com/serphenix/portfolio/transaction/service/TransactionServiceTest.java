@@ -29,6 +29,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -54,23 +55,25 @@ public class TransactionServiceTest {
     @BeforeEach
     void setUp() {
         user = User.create("test@example.com", "hashed-password");
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         stock = Stock.create("TEST");
+        ReflectionTestUtils.setField(stock, "id", 10L);
 
-        wallet = Wallet.create(user, new BigDecimal("1000"));
+        wallet = Wallet.create(user.getId(), new BigDecimal("1000"));
     }
 
     @Test
     void buyWithInsufficientBalanceThrowsAndDoesNotTouchWallet() {
 
-        wallet = Wallet.create(user, new BigDecimal("50"));
+        wallet = Wallet.create(user.getId(), new BigDecimal("50"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(stockRepository.findBySymbol("TEST")).thenReturn(Optional.of(stock));
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("100"), Instant.now()
         ));
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserId(user.getId())).thenReturn(Optional.of(wallet));
 
         assertThatThrownBy(() -> transactionService.buy("test@example.com", new BuyRequestDto(
                 "TEST", 2L
@@ -87,8 +90,8 @@ public class TransactionServiceTest {
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("100"), Instant.now()
         ));
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.empty());
+        when(walletRepository.findByUserId(user.getId())).thenReturn(Optional.of(wallet));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.empty());
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         transactionService.buy("test@example.com", new BuyRequestDto("TEST", 2L));
@@ -106,7 +109,7 @@ public class TransactionServiceTest {
     @Test
     void buySecondTimeUpdateHoldingAndRecalculatesAvgCost() {
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
 
         holding.applyBuy(10L, new BigDecimal("100"), new BigDecimal("1000"));
 
@@ -115,8 +118,8 @@ public class TransactionServiceTest {
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("150"), Instant.now()
         ));
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.of(holding));
+        when(walletRepository.findByUserId(user.getId())).thenReturn(Optional.of(wallet));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.of(holding));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         transactionService.buy("test@example.com", new BuyRequestDto("TEST", 5L));
@@ -130,12 +133,12 @@ public class TransactionServiceTest {
     @Test
     void sellWithInsufficientHoldingQuantityThrowsAndDoesNotTouchWallet() {
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
         holding.applyBuy(3L, new BigDecimal("100"), new BigDecimal("300"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(stockRepository.findBySymbol("TEST")).thenReturn(Optional.of(stock));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.of(holding));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.of(holding));
 
         assertThatThrownBy(() ->
                 transactionService.sell("test@example.com", new SellRequestDto("TEST", 5L))
@@ -148,16 +151,16 @@ public class TransactionServiceTest {
     @Test
     void sellValidQuantityUpdatesQuantityWalletAndKeepsAvgCostUnchanged() {
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
         holding.applyBuy(10L, new BigDecimal("100"), new BigDecimal("1000"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(stockRepository.findBySymbol("TEST")).thenReturn(Optional.of(stock));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.of(holding));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.of(holding));
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("150"), Instant.now()
         ));
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserId(user.getId())).thenReturn(Optional.of(wallet));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         transactionService.sell("test@example.com", new SellRequestDto("TEST", 5L));
@@ -173,16 +176,16 @@ public class TransactionServiceTest {
     @Test
     void sellDeleteHoldingIfQuantityIsZero() {
 
-        Holding holding = Holding.create(user, stock);
+        Holding holding = Holding.create(user.getId(), stock.getId());
         holding.applyBuy(10L, new BigDecimal("100"), new BigDecimal("1000"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(stockRepository.findBySymbol("TEST")).thenReturn(Optional.of(stock));
-        when(holdingRepository.findByUserAndStock(user, stock)).thenReturn(Optional.of(holding));
+        when(holdingRepository.findByUserIdAndStockId(user.getId(), stock.getId())).thenReturn(Optional.of(holding));
         when(stockService.getPrice("TEST")).thenReturn(new StockResponseDto(
                 1L, "TEST", "Test Company", new BigDecimal("150"), Instant.now()
         ));
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserId(user.getId())).thenReturn(Optional.of(wallet));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         transactionService.sell("test@example.com", new SellRequestDto("TEST", 10L));

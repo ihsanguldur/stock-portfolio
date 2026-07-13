@@ -1,7 +1,5 @@
 package com.serphenix.portfolio.portfolio.entity;
 
-import com.serphenix.portfolio.auth.entity.User;
-import com.serphenix.portfolio.stock.entity.Stock;
 import com.serphenix.portfolio.portfolio.exception.InsufficientHoldingException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,13 +24,11 @@ public class Holding {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stock_id", nullable = false)
-    private Stock stock;
+    @Column(name = "stock_id", nullable = false)
+    private Long stockId;
 
     @Column(name = "quantity")
     @ToString.Include
@@ -46,16 +42,16 @@ public class Holding {
     @Column(name = "version")
     private Long version;
 
-    public static Holding create(User user, Stock stock) {
+    public static Holding create(Long userId, Long stockId) {
         Holding holding = new Holding();
-        holding.user = user;
-        holding.stock = stock;
+        holding.userId = userId;
+        holding.stockId = stockId;
         holding.avgCost = BigDecimal.ZERO;
         holding.quantity = 0L;
         return holding;
     }
 
-    public void applyBuy(long quantity, BigDecimal price, BigDecimal cost) {
+    public void applyBuy(Long quantity, BigDecimal price, BigDecimal cost) {
         long newQuantity = this.getQuantity() + quantity;
 
         BigDecimal newAvgCost = this.getQuantity() == 0 ?
@@ -69,9 +65,9 @@ public class Holding {
         this.avgCost = newAvgCost;
     }
 
-    public void applySell(long quantity) {
+    public void applySell(Long quantity, String symbol) {
         if (this.getQuantity() < quantity) {
-            throw new InsufficientHoldingException("Insufficient holding " + this.quantity + " " + this.getStock().getSymbol());
+            throw new InsufficientHoldingException("Insufficient holding " + this.quantity + " " + symbol);
         }
 
         this.quantity = this.getQuantity() - quantity;
