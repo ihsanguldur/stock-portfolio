@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-audit-log-table.yaml
+      relativeToChangelogFile: false
