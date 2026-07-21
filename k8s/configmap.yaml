@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: portfolio
+data:
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:19092"

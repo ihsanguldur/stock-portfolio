@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-service
+  namespace: portfolio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transaction-service
+  template:
+    metadata:
+      labels:
+        app: transaction-service
+    spec:
+      containers:
+        - name: transaction-service
+          image: transaction-service:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/transaction_service_db
+            - name: WALLET_SERVICE_URL
+              value: http://wallet-service:8082/api
+            - name: PORTFOLIO_SERVICE_URL
+              value: http://portfolio-service:8084/api
+            - name: STOCK_SERVICE_URL
+              value: http://stock-service:8083/api
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-service
+  namespace: portfolio
+spec:
+  type: NodePort
+  selector:
+    app: transaction-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+      nodePort: 30085
