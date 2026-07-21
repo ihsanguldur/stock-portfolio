@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-service
+  namespace: portfolio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-service
+  template:
+    metadata:
+      labels:
+        app: stock-service
+    spec:
+      containers:
+        - name: stock-service
+          image: stock-service:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/stock_service_db
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+            - name: FINNHUB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: FINNHUB_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-service
+  namespace: portfolio
+spec:
+  type: NodePort
+  selector:
+    app: stock-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+      nodePort: 30083
