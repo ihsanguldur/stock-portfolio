@@ -9,9 +9,9 @@ COPY portfolio-service portfolio-service
 COPY transaction-service transaction-service
 COPY audit-service audit-service
 COPY api-gateway api-gateway
-RUN mvn -q -pl common,auth-service -am -DskipTests package
+RUN mvn -q -pl api-gateway -am -DskipTests package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /workspace/auth-service/target/auth-service-*.jar app.jar
+COPY --from=build /workspace/api-gateway/target/api-gateway-*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

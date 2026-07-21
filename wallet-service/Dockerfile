@@ -8,6 +8,7 @@ COPY stock-service stock-service
 COPY portfolio-service portfolio-service
 COPY transaction-service transaction-service
 COPY audit-service audit-service
+COPY api-gateway api-gateway
 RUN mvn -q -pl common,wallet-service -am -DskipTests package
 
 FROM eclipse-temurin:21-jre
