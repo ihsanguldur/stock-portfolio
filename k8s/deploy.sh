@@ -8,7 +8,7 @@ cd "$REPO_ROOT"
 
 echo "=== Building images in minikube's docker daemon ==="
 eval $(minikube docker-env)
-for svc in auth-service wallet-service stock-service portfolio-service transaction-service audit-service; do
+for svc in auth-service wallet-service stock-service portfolio-service transaction-service audit-service api-gateway; do
   echo "Building $svc:local..."
   docker build -t "$svc:local" -f "$svc/Dockerfile" .
 done
@@ -25,5 +25,8 @@ kubectl apply -f "$SCRIPT_DIR/postgres.yaml" -f "$SCRIPT_DIR/redis.yaml" -f "$SC
 echo "=== Applying app services ==="
 kubectl apply -f "$SCRIPT_DIR/auth-service.yaml" -f "$SCRIPT_DIR/wallet-service.yaml" -f "$SCRIPT_DIR/stock-service.yaml" \
                -f "$SCRIPT_DIR/portfolio-service.yaml" -f "$SCRIPT_DIR/transaction-service.yaml" -f "$SCRIPT_DIR/audit-service.yaml"
+
+echo "=== Applying api-gateway ==="
+kubectl apply -f "$SCRIPT_DIR/api-gateway.yaml"
 
 kubectl get pods -n portfolio

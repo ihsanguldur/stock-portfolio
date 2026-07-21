@@ -12,8 +12,9 @@ A stock/portfolio trading simulator written in Java/Spring Boot, started as a mo
 | `portfolio-service` | 8084 | `holdings` | holding lookup, updating holdings after buy/sell |
 | `transaction-service` | 8085 | `transactions` | **buy/sell orchestration (Saga)**, transaction history |
 | `audit-service` | 8086 | `audit_logs` | writing audit logs (via Kafka event), admin viewing |
+| `api-gateway` | 8080 | — | single entry point: path-based routing to the 6 services + aggregated Swagger UI |
 
-Plus `common` — a 7th Maven module that the other 6 services depend on at compile time: shared JWT security (`JwtService`, `JwtAuthenticationFilter`, `SecurityConfig`), global exception handling, retry helper, audit event/aspect.
+Plus `common` — a 7th Maven module that the other 6 services depend on at compile time: shared JWT security (`JwtService`, `JwtAuthenticationFilter`, `SecurityConfig`), global exception handling, retry helper, audit event/aspect. `api-gateway` does **not** depend on `common` — it's a plain routing layer with no JWT/business logic of its own.
 
 Services talk to each other via REST clients (`RestClient`) and Kafka events (audit, notifications, price refresh). `transaction-service` orchestrates the buy/sell flow as a Saga: debit the wallet → add to the portfolio; if the second step fails, a compensating refund is issued back to the wallet.
 
@@ -23,6 +24,15 @@ Services talk to each other via REST clients (`RestClient`) and Kafka events (au
 - `stock-service` uses Redis to cache prices.
 - Inter-service async communication goes through Kafka (audit events, notifications, price-refresh requests).
 - JWT-based stateless authentication, shared across all services via the `common` module.
+
+## API Gateway & API docs
+
+`api-gateway` (Spring Cloud Gateway, WebMvc/blocking variant — same synchronous stack as the rest of the project, no reactive code) is the single entry point for external traffic:
+
+- **Routing**: `/api/auth/**`, `/api/wallet/**`, `/api/stocks/**`, `/api/portfolio/**`, `/api/transactions/**`, `/api/admin/**` are forwarded unchanged to the matching service (each service's own `context-path=/api` already expects exactly that path, so no rewrite is needed).
+- **Swagger aggregation**: every service gets `springdoc-openapi` for free via the `common` module (`/api/v3/api-docs`, `/api/swagger-ui.html`), and `common`'s `SecurityConfig` permits those paths without a JWT. The gateway exposes one aggregated Swagger UI at `/swagger-ui.html`, with a dropdown listing all 6 services — each entry is proxied through a per-service path (`/docs/<service>/**`, `RewritePath` filter to `/api/**`) so the docs endpoints (which are identical across services) don't collide.
+- That same per-service proxy path also passes through anything else on the backend, e.g. `/docs/auth-service/actuator/health` reaches `auth-service`'s actuator.
+- Internal service-to-service calls (e.g. `transaction-service` → `wallet-service` during the buy Saga) go direct, **not** through the gateway — the gateway is only for the external/client-facing entry point.
 
 ## Running it
 
@@ -58,11 +68,15 @@ App services are exposed via NodePort (JWT auth already protects them, so direct
 | portfolio-service | 8084 | 30084 |
 | transaction-service | 8085 | 30085 |
 | audit-service | 8086 | 30086 |
+| api-gateway | 8080 | 30080 |
 
 ```bash
 minikube ip   # e.g. 192.168.49.2
-curl http://$(minikube ip):30081/api/...
+curl http://$(minikube ip):30081/api/...       # direct to auth-service
+curl http://$(minikube ip):30080/api/auth/...  # through the gateway
 ```
+
+Aggregated Swagger UI: `http://$(minikube ip):30080/swagger-ui.html`.
 
 Postgres/Redis/Kafka stay `ClusterIP` (internal-only, no auth layer of their own). To inspect Postgres with DataGrip or similar:
 
@@ -80,7 +94,7 @@ kubectl port-forward -n portfolio svc/postgres 5433:5432
 
 ## Tech stack
 
-Java 21, Spring Boot 4.1, Spring Security, Spring Data JPA, Spring Data Redis, Spring Kafka, Liquibase, PostgreSQL 16, Redis 7, Apache Kafka (KRaft), Maven (multi-module reactor), Docker / Docker Compose, Kubernetes (minikube).
+Java 21, Spring Boot 4.1, Spring Security, Spring Data JPA, Spring Data Redis, Spring Kafka, Liquibase, PostgreSQL 16, Redis 7, Apache Kafka (KRaft), Spring Cloud Gateway (WebMvc), springdoc-openapi, Maven (multi-module reactor), Docker / Docker Compose, Kubernetes (minikube).
 
 ## Planning documents
 

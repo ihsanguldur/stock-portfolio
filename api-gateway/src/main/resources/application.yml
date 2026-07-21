@@ -1,0 +1,100 @@
+server:
+  port: 8080
+
+auth-service:
+  url: http://localhost:8081
+wallet-service:
+  url: http://localhost:8082
+stock-service:
+  url: http://localhost:8083
+portfolio-service:
+  url: http://localhost:8084
+transaction-service:
+  url: http://localhost:8085
+audit-service:
+  url: http://localhost:8086
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+          - id: auth-service
+            uri: ${auth-service.url}
+            predicates:
+              - Path=/api/auth/**,/api/users/**
+          - id: wallet-service
+            uri: ${wallet-service.url}
+            predicates:
+              - Path=/api/wallet/**
+          - id: stock-service
+            uri: ${stock-service.url}
+            predicates:
+              - Path=/api/stocks/**
+          - id: portfolio-service
+            uri: ${portfolio-service.url}
+            predicates:
+              - Path=/api/portfolio/**
+          - id: transaction-service
+            uri: ${transaction-service.url}
+            predicates:
+              - Path=/api/transactions/**
+          - id: audit-service
+            uri: ${audit-service.url}
+            predicates:
+              - Path=/api/admin/**
+          - id: auth-service-docs
+            uri: ${auth-service.url}
+            predicates:
+              - Path=/docs/auth-service/**
+            filters:
+              - RewritePath=/docs/auth-service/(?<segment>.*), /api/$\{segment}
+          - id: wallet-service-docs
+            uri: ${wallet-service.url}
+            predicates:
+              - Path=/docs/wallet-service/**
+            filters:
+              - RewritePath=/docs/wallet-service/(?<segment>.*), /api/$\{segment}
+          - id: stock-service-docs
+            uri: ${stock-service.url}
+            predicates:
+              - Path=/docs/stock-service/**
+            filters:
+              - RewritePath=/docs/stock-service/(?<segment>.*), /api/$\{segment}
+          - id: portfolio-service-docs
+            uri: ${portfolio-service.url}
+            predicates:
+              - Path=/docs/portfolio-service/**
+            filters:
+              - RewritePath=/docs/portfolio-service/(?<segment>.*), /api/$\{segment}
+          - id: transaction-service-docs
+            uri: ${transaction-service.url}
+            predicates:
+              - Path=/docs/transaction-service/**
+            filters:
+              - RewritePath=/docs/transaction-service/(?<segment>.*), /api/$\{segment}
+          - id: audit-service-docs
+            uri: ${audit-service.url}
+            predicates:
+              - Path=/docs/audit-service/**
+            filters:
+              - RewritePath=/docs/audit-service/(?<segment>.*), /api/$\{segment}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth-service
+        url: /docs/auth-service/v3/api-docs
+      - name: wallet-service
+        url: /docs/wallet-service/v3/api-docs
+      - name: stock-service
+        url: /docs/stock-service/v3/api-docs
+      - name: portfolio-service
+        url: /docs/portfolio-service/v3/api-docs
+      - name: transaction-service
+        url: /docs/transaction-service/v3/api-docs
+      - name: audit-service
+        url: /docs/audit-service/v3/api-docs
